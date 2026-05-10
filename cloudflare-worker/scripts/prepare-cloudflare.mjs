@@ -4,11 +4,12 @@ import { platform } from 'node:os';
 
 const workerName = process.env.WORKER_NAME || 'zjmf-monitor';
 const databaseName = process.env.D1_DATABASE_NAME || `${workerName}-d1`;
-const npx = platform() === 'win32' ? 'npx.cmd' : 'npx';
+const isWindows = platform() === 'win32';
 
 function runWrangler(args) {
-  return execFileSync(npx, ['wrangler@latest', ...args], {
+  return execFileSync('npx', ['wrangler@latest', ...args], {
     encoding: 'utf8',
+    shell: isWindows,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 }
