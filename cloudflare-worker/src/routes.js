@@ -117,6 +117,24 @@ export async function handleRequest(request, env) {
     return json({ ok: true });
   }
 
+  if (url.pathname.startsWith('/api/admin/servers/') && request.method === 'DELETE') {
+    const id = decodeURIComponent(url.pathname.slice('/api/admin/servers/'.length));
+    const existing = id ? await repo.getServer(id) : null;
+    if (!existing) return json({ error: 'SERVER_NOT_FOUND' }, 404);
+    const now = Math.floor(Date.now() / 1000);
+    await repo.deleteServer(id);
+    await repo.addEvent({
+      server_id: id,
+      old_state: 'configured',
+      new_state: 'deleted',
+      label: '删除监控项',
+      level: 'warning',
+      message: `监控项 ${serverDisplayName(existing)} 已从管理后台删除`,
+      created_at: now,
+    });
+    return json({ ok: true });
+  }
+
   if (url.pathname === '/api/admin/settings' && request.method === 'POST') {
     const body = await readJson(request);
     if (!body || typeof body !== 'object') return json({ error: 'INVALID_SETTINGS' }, 400);

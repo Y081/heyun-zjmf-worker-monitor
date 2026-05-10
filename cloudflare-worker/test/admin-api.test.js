@@ -67,6 +67,23 @@ class FakeStatement {
       });
       return {};
     }
+    if (this.sql.includes('INSERT INTO events')) {
+      this.data.eventWrites.push({
+        server_id: this.args[0],
+        label: this.args[3],
+        level: this.args[4],
+        message: this.args[5],
+      });
+      return {};
+    }
+    if (this.sql.includes('DELETE FROM runtimes')) {
+      this.data.deletedRuntimes.push(this.args[0]);
+      return {};
+    }
+    if (this.sql.includes('DELETE FROM servers')) {
+      this.data.deletedServers.push(this.args[0]);
+      return {};
+    }
     throw new Error(`Unexpected SQL: ${this.sql}`);
   }
 }
@@ -102,6 +119,9 @@ function env(overrides = {}) {
       ],
       providerWrites: [],
       serverWrites: [],
+      eventWrites: [],
+      deletedRuntimes: [],
+      deletedServers: [],
       servers: overrides.servers || [{ id: '8564', name: '主服务器', ip: '203.0.113.10', provider: 'heyunidc', enabled: 1 }],
       status: [{ id: '8564', name: '203.0.113.10', ip: '203.0.113.10', state: 'healthy', last_status_value: 'on' }],
       events: overrides.events || [
@@ -187,6 +207,23 @@ test('管理后台保存脱敏服务器时保留原 IP', async () => {
 
   assert.equal(res.status, 200);
   assert.equal(testEnv.DB.data.serverWrites[0].ip, '203.0.113.10');
+});
+
+test('管理后台删除监控项会删除配置和运行状态并写入日志', async () => {
+  const testEnv = env();
+  const res = await handleRequest(
+    new Request('https://worker.example/api/admin/servers/8564', {
+      method: 'DELETE',
+      headers: { authorization: 'Bearer admin-password' },
+    }),
+    testEnv,
+  );
+
+  assert.equal(res.status, 200);
+  assert.deepEqual(testEnv.DB.data.deletedRuntimes, ['8564']);
+  assert.deepEqual(testEnv.DB.data.deletedServers, ['8564']);
+  assert.equal(testEnv.DB.data.eventWrites[0].label, '删除监控项');
+  assert.doesNotMatch(testEnv.DB.data.eventWrites[0].message, /203\.0\.113\.10/);
 });
 
 test('管理日志接口返回最近事件且不泄露服务器 IP', async () => {

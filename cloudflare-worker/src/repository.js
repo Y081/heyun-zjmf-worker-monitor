@@ -124,6 +124,11 @@ export class D1Repository {
     `).bind(server.id, server.name, server.ip || '', server.provider, server.check_method || 'api_only', server.enabled === false ? 0 : 1, server.daily_reboot_limit || 0, server.scheduled_reboot || '', now).run();
   }
 
+  async deleteServer(id) {
+    await this.db.prepare('DELETE FROM runtimes WHERE server_id = ?1').bind(id).run();
+    await this.db.prepare('DELETE FROM servers WHERE id = ?1').bind(id).run();
+  }
+
   async setSetting(key, value) {
     await this.db.prepare('INSERT INTO settings (key,value) VALUES (?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value')
       .bind(key, String(value))

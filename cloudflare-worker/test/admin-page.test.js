@@ -10,6 +10,9 @@ test('管理后台页面使用 ZJMF_ADMIN_TOKEN 登录且不嵌入真实密码',
   assert.match(html, /ZJMF_ADMIN_TOKEN/);
   assert.match(html, /\/api\/admin\/overview/);
   assert.match(html, /\/api\/admin\/events/);
+  assert.match(html, /\/api\/admin\/servers\//);
+  assert.match(html, /method:'DELETE'/);
+  assert.match(html, /确认删除监控项/);
   assert.match(html, /监控项/);
   assert.match(html, /事件日志/);
   assert.match(html, /新建监控项/);
@@ -32,4 +35,5 @@ test('管理后台页面使用 ZJMF_ADMIN_TOKEN 登录且不嵌入真实密码',
   assert.match(html, /localStorage\.getItem\('zjmf_admin_token'\)/);
   assert.doesNotMatch(html, /服务器 IP|1\.2\.3\.4/);
   assert.doesNotMatch(html, /super-secret-admin-password/);
+  assert.doesNotMatch(html, /删除功能暂未开放/);
 });
