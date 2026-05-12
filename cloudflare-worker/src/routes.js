@@ -34,13 +34,18 @@ function serverDisplayName(server) {
 }
 
 function publicServer(server) {
+  const { ip: _ip, http_url: _httpUrl, tcp_host: _tcpHost, ...rest } = server;
+  return { ...rest, name: serverDisplayName(server) };
+}
+
+function adminServer(server) {
   const { ip: _ip, ...rest } = server;
   return { ...rest, name: serverDisplayName(server) };
 }
 
 function adminServers(servers, status) {
   const activeIds = new Set(status.map((server) => String(server.id)));
-  return servers.map(publicServer).sort((a, b) => {
+  return servers.map(adminServer).sort((a, b) => {
     const activeDiff = Number(activeIds.has(String(b.id))) - Number(activeIds.has(String(a.id)));
     if (activeDiff) return activeDiff;
     const enabledDiff = Number(b.enabled) - Number(a.enabled);

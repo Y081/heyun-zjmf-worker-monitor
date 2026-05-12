@@ -128,7 +128,16 @@ function env(overrides = {}) {
       deletedRuntimes: [],
       deletedServers: [],
       servers: overrides.servers || [{ id: '8564', name: '主服务器', ip: '203.0.113.10', provider: 'heyunidc', enabled: 1 }],
-      status: [{ id: '8564', name: '203.0.113.10', ip: '203.0.113.10', state: 'healthy', last_status_value: 'on' }],
+      status: [{
+        id: '8564',
+        name: '203.0.113.10',
+        ip: '203.0.113.10',
+        http_url: 'https://203.0.113.10/health',
+        tcp_host: '203.0.113.10',
+        tcp_port: 443,
+        state: 'healthy',
+        last_status_value: 'on',
+      }],
       events: overrides.events || [
         {
           id: 1,
@@ -194,6 +203,8 @@ test('公共状态接口不返回服务器 IP', async () => {
   assert.equal(res.status, 200);
   assert.equal(data.servers[0].name, '服务器 #8564');
   assert.equal(data.servers[0].ip, undefined);
+  assert.equal(data.servers[0].http_url, undefined);
+  assert.equal(data.servers[0].tcp_host, undefined);
   assert.doesNotMatch(text, /203\.0\.113\.10/);
 });
 
