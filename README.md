@@ -23,73 +23,38 @@ cloudflare-worker/
 cloudflare-worker/README.md
 ```
 
-## Windows 一键首次安装
+## 快速开始
 
-如果你只想下载一个文件，直接使用：
+### 方式一：使用安装脚本（⭐ 推荐）
 
-```text
-windows-one-click-deploy/步骤1-一键安装.bat
-```
+1. Fork 本仓库。
+2. 下载并双击 `windows-one-click-deploy/步骤1-一键安装.bat`。
+3. 按提示准备 Cloudflare Token、Account ID、Fork 后的仓库地址和网站密码。
+4. 脚本会自动检查依赖、下载部署文件、生成配置并启动部署。
+5. 完成后按日志里的真实地址访问状态页和管理后台。
 
-它会先检查 PowerShell、Node.js、npx；缺少 Node.js/npx 时会尝试通过 winget 自动安装 Node.js LTS，找不到任何 PowerShell 时会尝试通过 winget 安装 PowerShell 7，然后自动下载 `步骤2-一键部署.bat`、部署脚本和配置模板，并在同目录生成 `one-click.config.jsonc`。
+### 方式二：手动部署
 
-## 快速部署（5 步完成）
+1. Fork 本仓库。
+2. 创建 Cloudflare API Token：
+   - 打开 <https://dash.cloudflare.com/profile/api-tokens>
+   - 点击 **创建令牌**，在 API 令牌模板里选择 **编辑 Cloudflare Workers**
+   - 点击 **增加更多帐户**，添加 **D1 / 编辑**
+   - 账户资源选择 **包括所有账户**，区域资源选择 **包括所有区域**
+   - 滑到最下面，点击 **继续以显示摘要**，再点击 **创建令牌**
+3. 进入 Fork 后的仓库，打开 **Settings → Secrets and variables → Actions**，添加：
 
-无需修改任何代码或配置文件，即可部署专属于你的魔方财务监控实例。
+   | Secret 名称 | 值 | 是否必填 |
+   |-------------|----|----------|
+   | `CLOUDFLARE_API_TOKEN` | 第 2 步复制的 Token | 必填 |
+   | `ZJMF_ADMIN_TOKEN` | 管理后台网站密码 | 必填 |
+   | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 账户 ID | 推荐，多账号时必填 |
 
-### 第 1 步 — Fork 仓库
-
-点击本仓库右上角的 **Fork** 按钮，创建你自己的副本。
-
-### 第 2 步 — 创建 Cloudflare API Token
-
-前往 **Cloudflare Dashboard → API Tokens**，点击 **Create Token**，使用 **Edit Cloudflare Workers** 模板，并确认包含：
-
-| 权限 | 级别 |
-|------|------|
-| Account / Workers Scripts | Edit |
-| Account / D1 | Edit |
-| Account / Account Settings | Read |
-| User / User Details | Read |
-
-### 第 3 步 — 添加 GitHub Secrets
-
-进入你 Fork 的仓库 → **Settings → Secrets and variables → Actions → New repository secret**，添加：
-
-| Secret 名称 | 值 | 是否必填 |
-|-------------|----|----------|
-| `CLOUDFLARE_API_TOKEN` | 第 2 步获取的 Token | 必填 |
-| `ZJMF_ADMIN_TOKEN` | 任意强密码字符串（用于登录管理后台） | 必填 |
-| `CLOUDFLARE_ACCOUNT_ID` | 你的 Cloudflare Account ID | 推荐（多账号时必填） |
-| `ZJMF_API_ACCOUNT` | 魔方财务登录邮箱或手机号 | 可选，用于首次自动初始化 |
-| `ZJMF_API_PASSWORD` | 魔方财务 API 密钥 | 可选，用于首次自动初始化 |
-| `ZJMF_SERVER_ID` | 魔方财务产品 ID | 可选，用于首次自动初始化 |
-| `ZJMF_SERVER_NAME` | 状态页显示名称 | 可选 |
-| `ZJMF_SERVER_IP` | 服务器 IP，仅保存配置，状态页/API 不显示 | 可选 |
-| `PUSHPLUS_TOKEN` | pushplus 用户 token | 可选 |
-
-只有 `CLOUDFLARE_API_TOKEN` 和 `ZJMF_ADMIN_TOKEN` 是部署硬性必填。魔方财务相关 Secrets 不填也能完成部署，之后可在 `/admin` 管理后台添加服务商和监控项。
-
-### 第 4 步 — 运行 GitHub Actions
-
-进入 **Actions → Deploy to Cloudflare → Run workflow**，或向 `main`/`master` 推送一次提交。
-
-工作流会自动完成：
-
-- 创建或复用 D1 数据库
-- 执行 D1 迁移
-- 注入 `ZJMF_ADMIN_TOKEN` 为 Worker Secret `ADMIN_TOKEN`
-- 部署 Worker（状态页 UI + 管理后台 + API + Cron 监控任务）
-- 如果填写了 `ZJMF_API_ACCOUNT`、`ZJMF_API_PASSWORD`、`ZJMF_SERVER_ID`，会自动添加服务商和服务器监控配置
-- 如果填写了 `PUSHPLUS_TOKEN`，会自动添加 pushplus 通知
-
-### 第 5 步 — 访问你的状态页
-
-工作流成功后，在日志最后查看真实地址。默认 Worker 名称是 `zjmf-monitor`，也可在仓库 **Settings → Secrets and variables → Actions → Variables** 里设置 `WORKER_NAME`。
-
-- 状态页：`https://<WORKER_NAME>.<你的 workers.dev 子域>.workers.dev/`
-- 管理后台：`https://<WORKER_NAME>.<你的 workers.dev 子域>.workers.dev/admin`
-- API：`https://<WORKER_NAME>.<你的 workers.dev 子域>.workers.dev/api/status`
+4. 进入 **Actions → Deploy to Cloudflare → Run workflow**。
+5. 工作流成功后，在日志最后查看真实 Worker 地址，并访问：
+   - 状态页：`https://<WORKER_NAME>.<你的 workers.dev 子域>.workers.dev/`
+   - 管理后台：`https://<WORKER_NAME>.<你的 workers.dev 子域>.workers.dev/admin`
+   - API：`https://<WORKER_NAME>.<你的 workers.dev 子域>.workers.dev/api/status`
 
 ## 架构
 
@@ -127,7 +92,7 @@ healthy ↔ suspect → down → rebooting → recovering → healthy
 - 重启用 **hard_reboot**（硬重启）
 - 服务器状态为 `on` 表示正常，其他值均视为异常
 
-## 快速开始
+## Python 本地版快速开始
 
 ### 1. 安装
 
