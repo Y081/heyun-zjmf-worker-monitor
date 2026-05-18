@@ -81,6 +81,77 @@ function Convert-GitHubRepoInput([string]$Value) {
 function Save-Config($Config) {
     $Config | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $script:ConfigPath -Encoding utf8
 }
+function Remove-JsonComments([string]$Text) {
+    $sb = [System.Text.StringBuilder]::new()
+    $inString = $false; $escape = $false; $lineComment = $false; $blockComment = $false
+    for ($i = 0; $i -lt $Text.Length; $i++) {
+        $c = $Text[$i]
+        $n = if ($i + 1 -lt $Text.Length) { $Text[$i + 1] } else { [char]0 }
+        if ($lineComment) {
+            if ($c -eq "`n") { [void]$sb.Append($c); $lineComment = $false }
+            continue
+        }
+        if ($blockComment) {
+            if ($c -eq "*" -and $n -eq "/") { $i++; $blockComment = $false }
+            continue
+        }
+        if ($inString) {
+            [void]$sb.Append($c)
+            if ($escape) { $escape = $false }
+            elseif ($c -eq "\") { $escape = $true }
+            elseif ($c -eq '"') { $inString = $false }
+            continue
+        }
+        if ($c -eq '"') { [void]$sb.Append($c); $inString = $true; continue }
+        if ($c -eq "/" -and $n -eq "/") { $i++; $lineComment = $true; continue }
+        if ($c -eq "/" -and $n -eq "*") { $i++; $blockComment = $true; continue }
+        [void]$sb.Append($c)
+    }
+    return $sb.ToString()
+}
+function ConvertFrom-JsoncFile([string]$Path) {
+    $content = Get-Content -LiteralPath $Path -Raw -Encoding utf8
+    return (Remove-JsonComments $content | ConvertFrom-Json -AsHashtable)
+}
+function Get-DefaultConfigText {
+    return @'
+{
+  // Cloudflare Worker 名称和 D1 数据库名
+  "workerName": "zjmf-monitor",
+  "d1DatabaseName": "zjmf-monitor",
+  "cloudflareAccountId": "",
+
+  // GitHub 仓库地址，首次安装脚本会从这里下载源码
+  "upstreamRepo": "loqwe/heyun-zjmf-worker-monitor",
+
+  // 管理后台网站密码；双击 BAT 交互部署时会要求输入两次
+  "adminToken": "请填写强密码",
+
+  // 魔方财务配置；可留空，部署后到 /admin 初始化向导填写
+  "providerName": "heyunidc",
+  "providerDisplayName": "核云",
+  "zjmfApiBaseUrl": "https://www.heyunidc.cn/v1",
+  "zjmfApiAccount": "",
+  "zjmfApiPassword": "",
+  "serverId": "",
+  "serverName": "",
+  "serverIp": "",
+
+  // 检测配置
+  "checkMethod": "service_then_power",
+  "httpUrl": "",
+  "httpMethod": "GET",
+  "httpExpectedStatus": "200-399",
+  "tcpHost": "",
+  "tcpPort": 996,
+  "dailyRebootLimit": 3,
+
+  // 通知配置
+  "pushplusToken": "",
+  "timezone": "Asia/Shanghai"
+}
+'@
+}
 function Get-WranglerCommand([string[]]$SubCommands) {
     return @($Npx, "--yes", $WranglerPackage) + $SubCommands
 }
@@ -187,13 +258,29 @@ function Resolve-WorkerRoot {
     throw "缓存源码里没有找到 cloudflare-worker 目录。"
 }
 function Read-Config {
-    $configFile = if ([string]::IsNullOrWhiteSpace($ConfigPath)) { Join-Path $Root "one-click.config.json" } else { [System.IO.Path]::GetFullPath($ConfigPath) }
-    $example = Join-Path $Root "one-click.config.example.json"
+    $defaultJsonc = Join-Path $Root "one-click.config.jsonc"
+    $defaultJson = Join-Path $Root "one-click.config.json"
+    $configFile = if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
+        if (Test-Path $defaultJsonc) { $defaultJsonc } elseif (Test-Path $defaultJson) { $defaultJson } else { $defaultJsonc }
+    } else {
+        [System.IO.Path]::GetFullPath($ConfigPath)
+    }
+    $exampleJsonc = Join-Path $Root "one-click.config.example.jsonc"
+    $exampleJson = Join-Path $Root "one-click.config.example.json"
     if (-not (Test-Path $configFile)) {
-        Copy-Item -LiteralPath $example -Destination $configFile
+        if (Test-Path $exampleJsonc) {
+            Copy-Item -LiteralPath $exampleJsonc -Destination $configFile
+        } elseif (Test-Path $exampleJson) {
+            Copy-Item -LiteralPath $exampleJson -Destination $configFile
+        } else {
+            Get-DefaultConfigText | Set-Content -LiteralPath $configFile -Encoding utf8
+        }
         Write-Note "已生成配置文件: $configFile"
     }
     $script:ConfigPath = $configFile
+    if ($configFile -match '\.jsonc$') {
+        return (ConvertFrom-JsoncFile $configFile)
+    }
     return (Get-Content -LiteralPath $configFile -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable)
 }
 function Invoke-InteractiveSetup($Config) {
@@ -237,7 +324,7 @@ function Ensure-CloudflareAuth($Config) {
             Write-Step "Cloudflare 登录"
             Invoke-CommandLine (Get-WranglerCommand @("login")) | Out-Null
         }
-        throw "未填写 Cloudflare Account ID。请双击一键部署.cmd 输入，或在 one-click.config.json 填写 cloudflareAccountId。"
+        throw "未填写 Cloudflare Account ID。请双击首次安装 BAT 输入，或在 one-click.config.jsonc 填写 cloudflareAccountId。"
     }
     $env:CLOUDFLARE_ACCOUNT_ID = $resolvedAccountId
     if ($configAccountId -ne $resolvedAccountId) {
@@ -344,13 +431,14 @@ function Seed-MonitorConfig($BaseUrl, $AdminToken, $Config) {
 
 trap { Write-Host ""; Write-Host "部署已中断: $($_.Exception.Message)" -ForegroundColor Red; exit 1 }
 
+$Config = Read-Config
+$ConfigPath = $script:ConfigPath
+$UpstreamRepo = Get-ConfigValue $Config "upstreamRepo" $UpstreamRepo
+
 Write-Step "环境预检"
 foreach ($cmd in @("node", $Npx)) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) { throw "找不到命令 $cmd，请先安装 Node.js 20+。" }
 }
-$Config = Read-Config
-$ConfigPath = $script:ConfigPath
-$UpstreamRepo = Get-ConfigValue $Config "upstreamRepo" $UpstreamRepo
 Invoke-InteractiveSetup $Config
 $adminToken = Get-ConfigValue $Config "adminToken" ""
 if (-not $Interactive -and $env:ZJMF_ADMIN_TOKEN) { $adminToken = $env:ZJMF_ADMIN_TOKEN }

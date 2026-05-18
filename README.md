@@ -23,6 +23,16 @@ cloudflare-worker/
 cloudflare-worker/README.md
 ```
 
+## Windows 一键首次安装
+
+如果你只想下载一个文件，直接使用：
+
+```text
+windows-one-click-deploy/步骤1-首次安装.bat
+```
+
+它会自动下载部署脚本，并在同目录生成 `one-click.config.jsonc`。
+
 ## 快速部署（5 步完成）
 
 无需修改任何代码或配置文件，即可部署专属于你的魔方财务监控实例。

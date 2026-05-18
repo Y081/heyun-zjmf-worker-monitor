@@ -1,6 +1,14 @@
 基础命令
 
-直接双击：
+最简单方式：只下载一个文件并双击：
+
+步骤1-首次安装.bat
+
+它会自动下载部署脚本，并在同目录自动创建：
+
+one-click.config.jsonc
+
+如果你已经下载了完整目录，也可以直接双击：
 
 一键部署.cmd
 
@@ -17,7 +25,7 @@ ZJMF_ADMIN_TOKEN 网站密码会要求输入两次确认。两次都直接回车
 
 第一次运行会自动生成本地配置文件：
 
-one-click.config.json
+one-click.config.jsonc
 
 脚本会把确认后的管理后台密码写入配置文件，并作为 Worker Secret 注入 Cloudflare。
 
@@ -65,4 +73,4 @@ $env:CLOUDFLARE_API_TOKEN = "你的 Cloudflare API Token"
 $env:CLOUDFLARE_ACCOUNT_ID = "你的 Cloudflare Account ID"
 
 注意：
-one-click.config.json 会保存管理密码和魔方财务 API 密钥，已经加入 .gitignore，不要上传到 GitHub。
+one-click.config.jsonc 会保存管理密码和魔方财务 API 密钥，已经加入 .gitignore，不要上传到 GitHub。

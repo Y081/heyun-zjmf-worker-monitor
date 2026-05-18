@@ -29,6 +29,16 @@ Cloudflare Worker 不能执行本机 ICMP `ping`，因此 Worker 版不支持 `p
 
 Worker 版已去掉定时重启，只在连续 3 次探测异常后触发恢复动作，并按 24 小时窗口限制次数。三步检测模式下：API 状态为 `on` 时重启，API 状态为 `off` 时开机。
 
+## Windows 一键首次安装
+
+如果你只想下载一个文件，下载并双击：
+
+```text
+../windows-one-click-deploy/步骤1-首次安装.bat
+```
+
+它会自动下载部署脚本，并在同目录生成 `one-click.config.jsonc`。
+
 ## 快速部署（5 步完成）
 
 无需修改任何代码或配置文件，即可部署专属于你的魔方财务监控实例。
