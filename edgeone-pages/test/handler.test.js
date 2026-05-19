@@ -94,3 +94,14 @@ test('Edge Function 入口支持全局 KV 绑定', async () => {
     }
   }
 });
+
+test('管理初始化弹窗支持滚动显示完整内容', async () => {
+  const res = await handleEdgeOneRequest(new Request('https://edgeone.example/admin'), {
+    ADMIN_TOKEN: 'admin',
+    ZJMF_KV: new MemoryKV(),
+  });
+  const html = await res.text();
+
+  assert.match(html, /#setupWizardModal,#notifyModal,#editModal\{align-items:start;overflow:auto\}/);
+  assert.match(html, /#setupWizardModal \.setup-modal\{width:min\(1180px,calc\(100vw - 48px\)\);scrollbar-gutter:stable\}/);
+});
