@@ -95,6 +95,9 @@ test('管理后台页面使用 ZJMF_ADMIN_TOKEN 登录且不嵌入真实密码',
   assert.doesNotMatch(html, /if\(token\)enter\(\)\.catch/);
   assert.match(html, /startSetupBtn/);
   assert.match(html, /cancelSetupBtn/);
+  assert.match(html, /async function skipSetupAndEnter/);
+  assert.match(html, /\$\('cancelSetupBtn'\)\.onclick=skipSetupAndEnter/);
+  assert.doesNotMatch(html, /\$\('cancelSetupBtn'\)\.onclick=showEmpty/);
   assert.match(html, /resumeSetupBtn/);
   assert.match(html, /syncSelectedHost/);
   assert.doesNotMatch(html, /服务器 IP|1\.2\.3\.4/);
