@@ -24,7 +24,7 @@
 
 ### 方式二：EdgeOne Pages 复用现有仓库部署
 
-打开 [EdgeOne Pages 控制台](https://console.tencentcloud.com/edgeone/pages)，点击 **导入其它仓库**，选择 `loqwe/heyun-zjmf-worker-monitor`。
+打开 [EdgeOne Pages 控制台](https://console.tencentcloud.com/edgeone/pages)，点击 **导入其它仓库**，选择你自己的仓库：`xxxx/heyun-zjmf-worker-monitor`。
 
 按图填写：
 
@@ -38,7 +38,7 @@
 | 环境变量 | `ADMIN_TOKEN=admin` |
 | KV 绑定变量名 | `ZJMF_KV` |
 
-KV 绑定单独设置：进入 KV Storage，绑定 Namespace，变量名填 `ZJMF_KV`，Namespace 选你创建的 `zjmf`。
+KV 绑定：打开 **KV 存储**，变量名称填 `ZJMF_KV`；命名空间名称随意，例如 `zjmf`。如果还没有命名空间，先点击 **创建命名空间**。
 
 说明：EdgeOne 版使用 Edge Functions + KV 保存配置和事件，定时监控由外部定时器调用 `/api/admin/run`。首次部署后仍需在 EdgeOne 控制台绑定 KV 到变量名 `ZJMF_KV`。不要改成 `cloud-functions/`，否则 KV 绑定不会注入。
 
