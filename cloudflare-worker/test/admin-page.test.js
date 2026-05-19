@@ -98,6 +98,11 @@ test('管理后台页面使用 ZJMF_ADMIN_TOKEN 登录且不嵌入真实密码',
   assert.match(html, /autoFillHttpUrl\(\$\('serverForm'\)\)/);
   assert.match(html, /name="api_password" type="text"/);
   assert.match(html, /id="editModal"/);
+  assert.match(html, /#editModal \.setup-modal/);
+  assert.match(html, /max-height:calc\(100vh - 48px\)/);
+  assert.match(html, /overflow-y:auto/);
+  assert.match(html, /#serverForm \.checkCard/);
+  assert.match(html, /padding:12px 14px/);
   assert.match(html, /保存服务商/);
   assert.match(html, /保存服务器/);
   assert.match(html, /id="toast"/);
