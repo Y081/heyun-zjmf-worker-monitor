@@ -45,10 +45,10 @@
 | 输出目录 | `.` |
 | 构建命令 | `npm test` |
 | 安装命令 | `npm install` |
-| 环境变量 | `ADMIN_TOKEN=admin` |
-| KV 绑定变量名 | `ZJMF_KV` |
+| 环境变量 | 变量名 `ADMIN_TOKEN`，值 `admin` |
+| KV 绑定变量 | 变量名 `ZJMF_KV`，值 `ZJMF_KV` |
 
-KV 绑定：打开 **KV 存储**，变量名称填 `ZJMF_KV`；命名空间名称随意，例如 `zjmf`。如果还没有命名空间，先点击 **创建命名空间**。
+KV 绑定：打开 **KV 存储**，变量名填 `ZJMF_KV`，值选择或创建 `ZJMF_KV`。如果还没有命名空间，先点击 **创建命名空间**。
 
 说明：EdgeOne 版使用 Edge Functions + KV 保存配置和事件，定时监控由外部定时器调用 `/api/admin/run`。首次部署后仍需在 EdgeOne 控制台绑定 KV 到变量名 `ZJMF_KV`。EdgeOne 版不能做原生 TCP 检测，默认检测方式是 **HTTP(S) + API（EdgeOne 选这个）**；Cloudflare Worker 版默认检测方式是 **HTTP(S) + TCP + API（Cloudflare Worker 选这个）**。不要改成 `cloud-functions/`，否则 KV 绑定不会注入。
 
